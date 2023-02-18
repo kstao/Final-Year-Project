@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>DHL - login</title>
+	<link href="src/css/styles.css" rel="stylesheet" />
+
+	<!-- Google Fonts -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+
+	<!-- MDB -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.1.0/mdb.min.css" rel="stylesheet" />
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.1.0/mdb.min.js"></script>
+	<script src="src/js/jquery-3.4.1.min.js"></script>
+
+	<!--webchat-->
+	<script src="https://cdn.jsdelivr.net/npm/rasa-webchat@1.x.x/lib/index.js"></script>
+	<script src="src/js/webchat.js"></script>
+
+	<style>
+		.gradient-custom-2 {
+			/* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+			background: #D40511;
+		}
+
+		@media (min-width: 768px) {
+			.gradient-form {
+				height: 100vh !important;
+			}
+		}
+
+		@media (min-width: 769px) {
+			.gradient-custom-2 {
+				border-top-right-radius: .3rem;
+				border-bottom-right-radius: .3rem;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<section class="h-100 gradient-form" 
+		style="background-image: url('src/img/glo-core-get-in-touch-yellow.web.793.252.jpg'); 
+				background-repeat: no-repeat; 
+				background-position: center;
+				background-size: cover;">
+		<div class="container py-5 h-100">
+			<div class="row d-flex justify-content-center align-items-center h-100">
+				<div class="col-xl-10">
+					<div class="card rounded-3 text-black">
+						<div class="row g-0">
+							<div class="col-lg-6">
+								<div class="card-body p-md-5 mx-md-4">
+
+									<div class="text-center">
+										<img src="src/img/dhl-logo.svg" class="mt-1 mb-5 pb-1" alt="logo">
+									</div>
+
+									<form>
+										<div class="form-outline mb-4">
+											<input type="text" id="username" class="form-control" />
+											<label class="form-label" for="form2Example11">Username</label>
+										</div>
+
+										<div class="form-outline mb-4">
+											<input type="password" id="password" class="form-control" />
+											<label class="form-label" for="form2Example22">Password</label>
+										</div>
+
+										<div class="text-center pt-1 mb-5 pb-1">
+											<button class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3" type="button" id="login" style="background-color: #D40511;">Login</button>
+											<a class="text-muted" href="#!">Forgot password?</a>
+										</div>
+
+										<div class="d-flex align-items-center justify-content-center pb-4">
+											<p class="mb-0 me-2">Don't have an account?</p>
+											<button type="button" class="btn btn-outline-danger">Create new</button>
+										</div>
+
+									</form>
+
+								</div>
+							</div>
+							<div class="col-lg-6 d-flex align-items-center gradient-custom-2">
+								<div class="text-white px-3 py-4 p-md-5 mx-md-4">
+									<!-- <img src="src/img/draw2.webp" class="img-fluid" alt="Sample image"> -->
+									<h3 class="mb-4">Welcome to DHL</h3>
+									<p class="small mb-0" style="text-align: justify; text-justify: inter-word;">
+										<b>DHL is present in over 220 countries and territories across the globe, making it the most international company in the world. With a workforce exceeding 350,000 employees, we provide solutions for an almost infinite number of logistics needs.</b>
+									</p>
+									<br>
+									<p class="small mb-0" style="text-align: justify; text-justify: inter-word;">
+										<b>DHL is part of the world's leading postal and logistics company Deutsche Post DHL Group, and encompasses the business units DHL Express, DHL Parcel, DHL eCommerce, DHL Global Forwarding, DHL Freight and DHL Supply Chain.</b>
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.1.0/mdb.min.js"></script>
+<script>
+	$(document).ready(function () {
+		$("#login").click(function (e) {
+			var username = $("#username").val();
+			var password = $("#password").val();
+			$.ajax({
+				url: "php/login.php", // ur location
+				type: "POST",
+				data: { username: username, password: password }, //send data to php
+				dataType: "json", //received data 
+				success: function (data) {
+					console.log(data);
+					if (data.result == false) {
+						alert("Invalid username or password");
+					}
+					else if (data.result == true) {
+						sessionStorage.setItem("username", data.username);
+						sessionStorage.setItem("id", data.id);
+						sessionStorage.setItem("role", data.role);
+
+						if (data.role == 1)
+							window.location.href = "admin_account.html";
+						else if (data.role == 5)
+							window.location.href = "user_account.html";
+						else if (data.role == 6)
+							window.location.href = "chatbot_account.html";
+						else if (data.role != 1 || data.role != 5 || data.role != 6)
+							window.location.href = "staff_account.html";
+					}
+				},
+				error: function (data) {
+					alert(JSON.stringify(data));
+				}
+			});
+		});
+	});
+</script>
+
+</html>

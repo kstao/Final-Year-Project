@@ -1,0 +1,204 @@
+<html>
+
+<head>
+	<style>
+		.btn {
+			background-color: #D2002E !important;
+			border-color: #D2002E !important;
+			/* float: right; */
+		}
+
+		form {
+			margin-block-end: 0;
+		}
+	</style>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	<link rel="stylesheet" href="src/css/styles.css">
+	<script src="src/js/jquery-3.4.1.min.js"></script>
+	<script src="src/js/scripts.js"></script>
+</head>
+
+<body>
+	<!-- navigation -->
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<div class="container-fluid">
+			<img src="src/img/dhl-logo.svg" id="dhl_logo" />
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+				aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link" href="user_account.html">Account</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="user_feedback.html">Feedback</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="user_history.html">History</a>
+					</li>
+				</ul>
+				<div class="navbar-collapse justify-content-end">
+					<ul class="navbar-nav">
+						<li class="nav-item">
+							<a class="nav-link" href="#" id="logout">Logout</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<!-- content -->
+	<div id="content" class="container">
+		<h3>Feedback</h3>
+		<!-- <form> -->
+		<div class="row mb-3">
+			<label for="FeedbackType" class="col-sm-2 col-form-label">Related Issues</label>
+			<div class="col-sm-10">
+				<select class="form-select" id="issue">
+					<option selected disabled>-- Please select your related issues --</option>
+					<option value="general issue">General Issue</option>
+					<option value="courier">Courier</option>
+					<option value="customer service">Customer Service</option>
+				</select>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label for="FeedbackType" class="col-sm-2 col-form-label">Feedback Type</label>
+			<div class="col-sm-10">
+				<select class="form-select" id="type">
+					<option selected disabled>-- Please select your feedback type --</option>
+					<option value="suggestion">Suggestion</option>
+					<option value="complaint">Complaint</option>
+					<option value="appraisal">Appraisal</option>
+				</select>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label for="FeedbackType" class="col-sm-2 col-form-label">Tracking Number</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="tracking_number" placeholder="Insert '-' if not relevant"/>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<label for="FeedbackDesription" class="col-sm-2 col-form-label">Description</label>
+			<div class="col-sm-10">
+				<textarea class="form-control" id="description" rows="5"></textarea>
+			</div>
+		</div>
+		<button type="submit" class="btn btn-primary" id="feedack_submit">Submit</button>
+		<!-- </form> -->
+	</div>
+
+	<script src="ml_bundle.js"></script>
+	<script>
+		$(document).ready(function () {
+			if (sessionStorage.getItem('role') != 5) {
+				sessionStorage.clear();
+				window.location.href = "index.html";
+				alert("Please login again...");
+			}
+		})
+
+		$(document).ready(function () {
+			$("#feedack_submit").click(async function (e) {
+
+				var tracking_number = $("#tracking_number").val();
+				var issue = $("#issue option:selected").val();
+				var type = $("#type option:selected").val();
+				var desc = $("#description").val();
+				var id = sessionStorage.getItem('id');
+
+				// monkey learn
+				var desc_arr = []
+				var urgency_tagname, urgency_confidence, sentiment_tagname, sentiment_confidence;
+				const ml = new MonkeyLearn('d67b48d511744722f562aa8b7909c8aba8409497');
+				let data = desc_arr;
+
+				desc_arr.push(desc);
+
+				let model_urgency = 'cl_Aiu8dfYF';
+				const res_urgency = await ml.classifiers.classify(model_urgency, data)
+				urgency_tagname = res_urgency.body[0].classifications[0].tag_name;
+				urgency_confidence = res_urgency.body[0].classifications[0].confidence;
+				var urgency = `{"${urgency_tagname}":"${urgency_confidence}"}`
+
+				let model_sentiment = 'cl_NDBChtr7';
+				const res_sentiment = await ml.classifiers.classify(model_sentiment, data)
+				sentiment_tagname = res_sentiment.body[0].classifications[0].tag_name;
+				sentiment_confidence = res_sentiment.body[0].classifications[0].confidence;
+				var sentiment = `{"${sentiment_tagname}":"${sentiment_confidence}"}`
+
+				//calculate priority
+				priority = 0;
+				urgency_weight = 0.405
+				not_urgency_weight = 0.033
+				positive_sentiment_weight = 0.033
+				neutral_sentiment_weight = 0.124
+				negative_sentiment_weight = 0.405
+
+				switch (urgency_tagname) {
+					case "Urgent":
+						priority = priority + urgency_confidence * urgency_weight;
+						break;
+					case "Not Urgent":
+						priority = priority + urgency_confidence * not_urgency_weight;
+						break;
+				}
+
+				switch (sentiment_tagname) {
+					case "Positive":
+						priority = priority + sentiment_confidence * positive_sentiment_weight;
+						break;
+					case "Negative":
+						priority = priority + sentiment_confidence * negative_sentiment_weight;
+						break;
+					case "Neutral":
+						priority = priority + sentiment_confidence * neutral_sentiment_weight;
+						break;
+				}
+
+				$.ajax({
+					url: "php/tracking_number_checker.php", // ur location
+					type: "POST",
+					data: { tracking_number: tracking_number }, //send data to php
+					dataType: "json", //received data 
+					success: function (data) {
+						if (data.result == false) {
+							alert("Invalid tracking number");
+						}
+						else if (data.result == true) {
+							// submit
+							$.ajax({
+								url: "php/user_feedback_submission.php", // ur location
+								type: "POST",
+								data: { issue: issue, type: type, desc: desc, sentiment: sentiment, urgency: urgency, id: id, priority: priority, tracking_number: tracking_number }, //send data to php
+								dataType: "json", //received data 
+								success: function (data) {
+									if (data.result == false) {
+										console.log();
+									}
+									else if (data.result == true) {
+										alert("Feedback submited successfully. Please go to history to check the progress.");
+										location.reload();
+									}
+								},
+								error: function (data) {
+									alert(JSON.stringify(data));
+								}
+							});
+						}
+					},
+					error: function (data) {
+						alert(JSON.stringify(data));
+					}
+				});
+			});
+		})
+	</script>
+</body>
+
+</html>
