@@ -1,0 +1,25 @@
+body{
+    background-color: #FFCC00 !important;
+}
+
+.rw-new-message{
+    overflow-y: hidden;
+}
+
+#content{
+    margin-top: 50px;
+    margin-bottom: 50px;
+    padding: 50px;
+    background-color: rgba(255,255,255,0.8);
+    border-radius: 25px;
+}
+
+.rw-launcher, .rw-header, .rw-client, .rw-reply, .rw-conversation-container .rw-send .rw-send-icon-ready{
+    background-color: #D2002E !important;
+    border-color: #D2002E !important;
+    fill: #D2002E !important;
+}
+
+#dhl_logo, .navbar-collapse .justify-content-end{
+    margin-right: 20px;
+}
